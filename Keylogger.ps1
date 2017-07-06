@@ -361,6 +361,12 @@ function Get-Keystrokes {
 
     # Start KeyLogger
     [void]$PowerShell.BeginInvoke()
+	#BeginInvoke is something like:
+	#main()
+	#{
+	#	CreateThread(...)
+	#	Exit(0) //thread terminated because process exit
+	#}
 
     if ($PassThru.IsPresent) { return $PowerShell }
 }
